@@ -8,23 +8,22 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Configuração do Tailwind para Modo Escuro Manual e Cores Customizadas -->
+  <!-- Configuração do Tailwind -->
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           colors: {
-            // Paleta Inspirada (Ferretto Blue & Backgrounds)
             brand: {
               50: '#eff6ff',
               100: '#dbeafe',
               500: '#3b82f6',
-              600: '#2563eb', // Azul Royal Principal
+              600: '#2563eb',
               700: '#1d4ed8',
               900: '#1e3a8a',
             },
-            bgLight: '#F3F6FA', // Fundo cinza-azulado da plataforma
+            bgLight: '#F3F6FA',
             surfaceLight: '#FFFFFF',
           },
           fontFamily: {
@@ -49,15 +48,12 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js" async defer></script>
 
-  <!-- Fonte Inter (Comum em plataformas modernas) -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     body { font-family: 'Inter', sans-serif; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-    
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -69,7 +65,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useMemo } = React;
+    const { useState, useEffect, useMemo, useRef, useCallback } = React;
     const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
 
     // --- ÍCONES ---
@@ -95,16 +91,18 @@
         uploadCloud: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>,
         downloadCloud: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>,
         moon: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>,
-        sun: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        sun: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>,
+        refreshCw: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>,
+        check: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}><polyline points="20 6 9 17 4 12"/></svg>
       };
       return icons[name] || null;
     };
 
     // --- UTILS ---
-    const COLORS_THEORY = '#3b82f6'; // Azul Brand
-    const COLORS_EXERCISE = '#f59e0b'; // Amber
-    const COLORS_CORRECT = '#10b981'; // Emerald
-    const COLORS_WRONG = '#ef4444'; // Red
+    const COLORS_THEORY = '#3b82f6'; 
+    const COLORS_EXERCISE = '#f59e0b'; 
+    const COLORS_CORRECT = '#10b981'; 
+    const COLORS_WRONG = '#ef4444'; 
     
     const formatTime = (seconds) => {
       if (!seconds) return "00:00:00";
@@ -318,7 +316,7 @@
         studyType, 
         setStudyType, 
         handleStartTimer, 
-        handlePauseTimer,
+        handlePauseTimer, 
         handleResumeTimer,
         handleFinishSession, 
         setShowManualTimeModal 
@@ -353,7 +351,7 @@
                             </button>
                         </>
                     )}
-                    
+
                     {!timerRunning && timerSeconds > 0 && (
                         <>
                             <button onClick={handleResumeTimer} className="bg-emerald-600 hover:bg-emerald-500 px-8 py-4 rounded-xl font-bold flex gap-2 text-white shadow-lg shadow-emerald-600/20 transition-all transform hover:scale-105">
@@ -424,11 +422,10 @@
         </div>
     );
 
-    const SettingsView = ({ theme, toggleTheme, exportData, importData, driveConfig, setDriveConfig, isDriveAuthenticated, handleDriveLogin, syncUploadToDrive, syncDownloadFromDrive }) => (
+    const SettingsView = ({ theme, toggleTheme, exportData, importData, driveConfig, setDriveConfig, isDriveAuthenticated, handleDriveLogin, syncStatus }) => (
         <div className="space-y-8 animate-fade-in max-w-3xl mx-auto">
           <header><h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Configurações</h2><p className="text-slate-500 dark:text-slate-400">Personalize sua experiência.</p></header>
           
-          {/* Theme Toggle */}
           <div className="bg-surfaceLight dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
              <div className="flex items-center gap-3">
                 <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-600 dark:text-white"><Icon name={theme === 'dark' ? 'moon' : 'sun'} size={20}/></div>
@@ -451,9 +448,9 @@
           </div>
 
           <div className="bg-surfaceLight dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 text-green-600 dark:text-green-400"><Icon name="uploadCloud" size={20}/> Google Drive Sync</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2 text-green-600 dark:text-green-400"><Icon name="uploadCloud" size={20}/> Google Drive Sync (Auto-Save)</h3>
             <div className="bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200 p-4 rounded-lg mb-6 text-sm border border-yellow-200 dark:border-yellow-800">
-              <strong>Nota:</strong> Requer Client ID e API Key configuradas no Google Cloud.
+              <strong>Nota:</strong> Quando conectado, seus dados serão salvos automaticamente na pasta <code>VAstudy Backup</code> do seu Drive sempre que houver alterações.
             </div>
             
             <div className="space-y-4 mb-6">
@@ -461,15 +458,20 @@
                <div><label className="text-xs font-bold text-slate-500 uppercase">Google API Key</label><input type="text" value={driveConfig.apiKey} onChange={e=>setDriveConfig({...driveConfig, apiKey:e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-2 text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono text-sm" placeholder="ex: AIzaSy..."/></div>
             </div>
 
-            <div className="flex flex-wrap gap-4 items-center">
-               {!isDriveAuthenticated ? (
-                 <button onClick={handleDriveLogin} className="bg-white border border-slate-300 text-slate-700 px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors"><img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" className="w-5 h-5"/> Conectar</button>
-               ) : (
-                 <span className="text-green-600 dark:text-green-400 font-bold flex items-center gap-2"><Icon name="checkCircle" size={18}/> Conectado</span>
-               )}
-               <div className="h-8 w-[1px] bg-slate-300 dark:bg-slate-700 mx-2 hidden md:block"></div>
-               <button onClick={syncUploadToDrive} disabled={!isDriveAuthenticated} className={`px-4 py-2 rounded-lg font-bold flex gap-2 text-white shadow-lg ${!isDriveAuthenticated ? 'bg-slate-400 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-500'}`}><Icon name="uploadCloud" size={20}/> Upload</button>
-               <button onClick={syncDownloadFromDrive} disabled={!isDriveAuthenticated} className={`px-4 py-2 rounded-lg font-bold flex gap-2 text-white shadow-lg ${!isDriveAuthenticated ? 'bg-slate-400 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-500'}`}><Icon name="downloadCloud" size={20}/> Download</button>
+            <div className="flex flex-wrap gap-4 items-center justify-between">
+               <div className="flex items-center gap-4">
+                   {!isDriveAuthenticated ? (
+                     <button onClick={handleDriveLogin} className="bg-white border border-slate-300 text-slate-700 px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors"><img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" className="w-5 h-5"/> Conectar</button>
+                   ) : (
+                     <span className="text-green-600 dark:text-green-400 font-bold flex items-center gap-2"><Icon name="checkCircle" size={18}/> Conectado</span>
+                   )}
+               </div>
+               <div className="flex items-center gap-2 text-sm font-medium">
+                    <span>Status:</span>
+                    <span className={`${syncStatus === 'saved' ? 'text-green-500' : syncStatus === 'saving' ? 'text-brand-500 animate-pulse' : syncStatus === 'error' ? 'text-red-500' : 'text-slate-400'}`}>
+                        {syncStatus === 'saved' ? 'Salvo na Nuvem' : syncStatus === 'saving' ? 'Salvando...' : syncStatus === 'error' ? 'Erro ao Salvar' : 'Aguardando...'}
+                    </span>
+               </div>
             </div>
           </div>
         </div>
@@ -498,8 +500,11 @@
       // DRIVE
       const [driveConfig, setDriveConfig] = useState(() => JSON.parse(localStorage.getItem('studyHub_driveConfig')) || { clientId: '', apiKey: '' });
       const [isDriveAuthenticated, setIsDriveAuthenticated] = useState(false);
-      const [gapiInited, setGapiInited] = useState(false);
       const [tokenClient, setTokenClient] = useState(null);
+      const [syncStatus, setSyncStatus] = useState('idle'); // idle, saving, saved, error
+      
+      // Folder ID Cache
+      const folderIdRef = useRef(null);
 
       const [newQSubject, setNewQSubject] = useState('');
       const [newQTotal, setNewQTotal] = useState('');
@@ -518,22 +523,22 @@
 
       const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
-      // PERSISTÊNCIA
+      // PERSISTÊNCIA LOCAL
       useEffect(() => localStorage.setItem('studyHub_sessions', JSON.stringify(studySessions)), [studySessions]);
       useEffect(() => localStorage.setItem('studyHub_questions_logs', JSON.stringify(questionsLogs)), [questionsLogs]);
       useEffect(() => localStorage.setItem('studyHub_subjects', JSON.stringify(savedSubjects)), [savedSubjects]);
       useEffect(() => localStorage.setItem('studyHub_driveConfig', JSON.stringify(driveConfig)), [driveConfig]);
 
-      // GOOGLE DRIVE
+      // GOOGLE DRIVE SETUP
       const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
       const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-      const BACKUP_FILE_NAME = 'vastudy_backup.json'; // Renamed file
+      const BACKUP_FOLDER_NAME = 'VAstudy Backup';
+      const BACKUP_FILE_NAME = 'vastudy_backup.json';
 
       useEffect(() => {
         if(driveConfig.clientId && driveConfig.apiKey && typeof gapi !== 'undefined' && typeof google !== 'undefined') {
             gapi.load('client', async () => {
                 await gapi.client.init({ apiKey: driveConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] });
-                setGapiInited(true);
             });
             const client = google.accounts.oauth2.initTokenClient({
               client_id: driveConfig.clientId,
@@ -546,47 +551,120 @@
 
       const handleDriveLogin = () => tokenClient?.requestAccessToken({prompt: ''});
 
-      const syncUploadToDrive = async () => {
-        if (!isDriveAuthenticated) return alert("Login necessário");
-        const data = { studySessions, questionsLogs, savedSubjects, backupDate: new Date().toISOString() };
-        const file = new Blob([JSON.stringify(data)], {type: 'application/json'});
+      // --- FOLDER LOGIC ---
+      const getOrCreateBackupFolder = async () => {
+          if (folderIdRef.current) return folderIdRef.current;
+          
+          try {
+              // Check if folder exists
+              const q = `mimeType = 'application/vnd.google-apps.folder' and name = '${BACKUP_FOLDER_NAME}' and trashed = false`;
+              const res = await gapi.client.drive.files.list({ q, fields: 'files(id)' });
+              
+              if (res.result.files.length > 0) {
+                  folderIdRef.current = res.result.files[0].id;
+                  return res.result.files[0].id;
+              } else {
+                  // Create folder
+                  const meta = { name: BACKUP_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' };
+                  const createRes = await gapi.client.drive.files.create({ resource: meta, fields: 'id' });
+                  folderIdRef.current = createRes.result.id;
+                  return createRes.result.id;
+              }
+          } catch (e) {
+              console.error("Error handling folder:", e);
+              throw e;
+          }
+      };
+
+      const saveToDrive = useCallback(async (silent = false) => {
+        if (!isDriveAuthenticated) {
+            if (!silent) alert("Login necessário");
+            return;
+        }
+        
+        setSyncStatus('saving');
+        const data = { studySessions, questionsLogs, savedSubjects, theme, backupDate: new Date().toISOString() };
+        const fileContent = JSON.stringify(data);
+        const file = new Blob([fileContent], {type: 'application/json'});
+
         try {
-            const res = await gapi.client.drive.files.list({ q: `name = '${BACKUP_FILE_NAME}' and trashed = false`, fields: 'files(id)'});
+            const folderId = await getOrCreateBackupFolder();
+            
+            // Check if file exists IN FOLDER
+            const q = `name = '${BACKUP_FILE_NAME}' and '${folderId}' in parents and trashed = false`;
+            const res = await gapi.client.drive.files.list({ q, fields: 'files(id)'});
             const existing = res.result.files[0];
-            const method = existing ? 'PATCH' : 'POST';
-            const url = `https://www.googleapis.com/upload/drive/v3/files${existing ? '/' + existing.id : ''}?uploadType=multipart`;
+
             const metadata = { name: BACKUP_FILE_NAME, mimeType: 'application/json' };
+            if (!existing) metadata.parents = [folderId]; // Only set parent on creation
+
+            const accessToken = gapi.client.getToken().access_token;
             const form = new FormData();
             form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
             form.append('file', file);
-            await fetch(url, { method, headers: {'Authorization': 'Bearer ' + gapi.client.getToken().access_token}, body: form });
-            alert("Backup salvo no Google Drive!");
-        } catch(e) { console.error(e); alert("Erro no upload: " + e.message); }
-      };
+
+            const url = existing 
+                ? `https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=multipart`
+                : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+            
+            const method = existing ? 'PATCH' : 'POST';
+
+            await fetch(url, { method, headers: {'Authorization': 'Bearer ' + accessToken}, body: form });
+            
+            setSyncStatus('saved');
+            if (!silent) alert("Backup salvo na pasta VAstudy Backup!");
+        } catch(e) { 
+            console.error(e); 
+            setSyncStatus('error');
+            if (!silent) alert("Erro no upload: " + e.message); 
+        }
+      }, [isDriveAuthenticated, studySessions, questionsLogs, savedSubjects, theme]);
+
+      // AUTO-SAVE EFFECT
+      useEffect(() => {
+        if (!isDriveAuthenticated) return;
+        
+        // Debounce save
+        const timeoutId = setTimeout(() => {
+            saveToDrive(true); // Silent save
+        }, 2000); // Wait 2 seconds after last change
+
+        return () => clearTimeout(timeoutId);
+      }, [studySessions, questionsLogs, savedSubjects, theme, isDriveAuthenticated, saveToDrive]);
+
 
       const syncDownloadFromDrive = async () => {
           if (!isDriveAuthenticated) return alert("Login necessário");
           try {
-              const res = await gapi.client.drive.files.list({ q: `name = '${BACKUP_FILE_NAME}' and trashed = false`, fields: 'files(id)'});
+              const folderId = await getOrCreateBackupFolder();
+              const q = `name = '${BACKUP_FILE_NAME}' and '${folderId}' in parents and trashed = false`;
+              const res = await gapi.client.drive.files.list({ q, fields: 'files(id)'});
+              
               if (res.result.files.length > 0) {
                   const f = await gapi.client.drive.files.get({ fileId: res.result.files[0].id, alt: 'media' });
                   const d = f.result;
                   if (confirm("Substituir dados locais?")) {
-                      setStudySessions(d.studySessions || []); setQuestionsLogs(d.questionsLogs || []); setSavedSubjects(d.savedSubjects || []);
+                      setStudySessions(d.studySessions || []); 
+                      setQuestionsLogs(d.questionsLogs || []); 
+                      setSavedSubjects(d.savedSubjects || []);
+                      if(d.theme) setTheme(d.theme);
                       alert("Dados carregados!");
                   }
-              } else alert("Backup não encontrado");
+              } else alert("Backup não encontrado na pasta VAstudy Backup.");
           } catch(e) { console.error(e); alert("Erro no download"); }
       };
 
       const exportData = () => {
-          const blob = new Blob([JSON.stringify({studySessions, questionsLogs, savedSubjects}, null, 2)], {type: 'application/json'});
+          const blob = new Blob([JSON.stringify({studySessions, questionsLogs, savedSubjects, theme}, null, 2)], {type: 'application/json'});
           const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'vastudy_backup.json'; a.click();
       };
       const importData = (e) => {
           const r = new FileReader(); r.onload = (ev) => {
               const d = JSON.parse(ev.target.result);
-              if(confirm("Substituir dados?")) { setStudySessions(d.studySessions||[]); setQuestionsLogs(d.questionsLogs||[]); setSavedSubjects(d.savedSubjects||[]); }
+              if(confirm("Substituir dados?")) { 
+                  setStudySessions(d.studySessions||[]); setQuestionsLogs(d.questionsLogs||[]); setSavedSubjects(d.savedSubjects||[]); 
+                  if(d.theme) setTheme(d.theme);
+              }
           };
           if(e.target.files[0]) r.readAsText(e.target.files[0]);
       };
@@ -712,13 +790,23 @@
                   <button onClick={()=>setActiveTab('settings')} className={`w-full flex items-center gap-3 p-4 rounded-lg font-medium transition-all ${activeTab==='settings'?'bg-brand-50 dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm border-l-4 border-brand-600':'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 border-l-4 border-transparent'}`}><Icon name="settings"/><span className="hidden md:block">Configurações</span></button>
                 </div>
               </nav>
-              <div className="p-4 text-center md:text-left text-xs text-slate-400 dark:text-slate-600 font-medium">v2.1.0</div>
+              <div className="p-4 flex justify-between items-center md:justify-between gap-2 text-xs text-slate-400 dark:text-slate-600 font-medium border-t border-slate-100 dark:border-slate-800">
+                <span>v2.2.0</span>
+                {syncStatus !== 'idle' && (
+                    <span className={`flex items-center gap-1 ${syncStatus === 'saved' ? 'text-green-500' : syncStatus === 'saving' ? 'text-brand-500' : 'text-red-500'}`}>
+                        {syncStatus === 'saving' && <Icon name="refreshCw" size={12} className="animate-spin"/>}
+                        {syncStatus === 'saved' && <Icon name="check" size={12}/>}
+                        {syncStatus === 'error' && <Icon name="alertCircle" size={12}/>}
+                        <span className="hidden md:inline">{syncStatus === 'saved' ? 'Salvo' : syncStatus === 'saving' ? 'Sync' : 'Erro'}</span>
+                    </span>
+                )}
+              </div>
             </aside>
             <main className="flex-1 overflow-y-auto p-4 md:p-8 transition-colors duration-300">
                {activeTab === 'dashboard' && <DashboardView studySessions={studySessions} questionsLogs={questionsLogs} />}
                {activeTab === 'timer' && <TimerView timerRunning={timerRunning} timerSeconds={timerSeconds} currentSubject={currentSubject} setCurrentSubject={setCurrentSubject} studyType={studyType} setStudyType={setStudyType} handleStartTimer={handleStartTimer} handlePauseTimer={handlePauseTimer} handleResumeTimer={handleResumeTimer} handleFinishSession={handleFinishSession} setShowManualTimeModal={setShowManualTimeModal} />}
                {activeTab === 'questions' && <QuestionsView newQSubject={newQSubject} setNewQSubject={setNewQSubject} newQTotal={newQTotal} setNewQTotal={setNewQTotal} newQCorrect={newQCorrect} setNewQCorrect={setNewQCorrect} handleManualAddQuestions={handleManualAddQuestions} aggregatedQuestions={aggregatedQuestions} />}
-               {activeTab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} exportData={exportData} importData={importData} driveConfig={driveConfig} setDriveConfig={setDriveConfig} isDriveAuthenticated={isDriveAuthenticated} handleDriveLogin={handleDriveLogin} syncUploadToDrive={syncUploadToDrive} syncDownloadFromDrive={syncDownloadFromDrive} />}
+               {activeTab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} exportData={exportData} importData={importData} driveConfig={driveConfig} setDriveConfig={setDriveConfig} isDriveAuthenticated={isDriveAuthenticated} handleDriveLogin={handleDriveLogin} syncUploadToDrive={() => saveToDrive(false)} syncDownloadFromDrive={syncDownloadFromDrive} syncStatus={syncStatus} />}
             </main>
         </div>
       );
