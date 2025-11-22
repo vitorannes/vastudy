@@ -4,7 +4,7 @@
   <link rel="manifest" href="/manifest.json">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>VAstudy - Ultra Sync v5</title>
+  <title>VAstudy</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -71,6 +71,21 @@
   <div id="root"></div>
 
   <script type="text/babel">
+    // ... dentro da sua tag <script type="text/babel">
+
+// --- REGISTRO DO SERVICE WORKER ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('SW registrado com sucesso!');
+      })
+      .catch(registrationError => {
+        console.log('Falha no registro SW:', registrationError);
+      });
+  });
+}
+// ----------------------------------
     // ==========================================================================================
     // CONFIGURAÇÃO PERMANENTE
     // ==========================================================================================
